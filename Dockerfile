@@ -33,9 +33,8 @@ RUN pnpm run build:web
 FROM node:23-alpine AS cast-server-deps
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@11.5.2 --activate
-COPY src/cast-server/package.json ./package.json
-COPY pnpm-workspace.yaml .
-RUN pnpm install
+COPY src/cast-server/package.json src/cast-server/pnpm-lock.yaml src/cast-server/pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 
 FROM cast-server-deps AS cast-server
 COPY . .
