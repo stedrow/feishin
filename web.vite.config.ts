@@ -44,10 +44,9 @@ export default defineConfig({
 
                     return 'assets/[name]-[hash][extname]';
                 },
-                sourcemapExcludeSources: false,
             },
         },
-        sourcemap: true,
+        sourcemap: false,
     },
     css: {
         modules: {

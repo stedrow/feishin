@@ -25,7 +25,7 @@
         "build:electron": "electron-vite build",
         "build:remote": "vite build --config remote.vite.config.ts",
         "build:web": "vite build --config web.vite.config.ts",
-        "cast-server": "tsx --tsconfig tsconfig.node.json src/cast-server/index.ts",
+        "cast-server": "tsx --tsconfig src/cast-server/tsconfig.json src/cast-server/index.ts",
         "dev": "electron-vite dev",
         "dev:remote": "vite dev --config remote.vite.config.ts",
         "dev:watch": "electron-vite dev --watch",

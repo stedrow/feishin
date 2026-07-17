@@ -24,10 +24,24 @@ RUN pnpm run build:web
 # run with `--network host` on Linux. Docker Desktop on Mac/Windows does not
 # expose real host networking, so device discovery there is limited to
 # whatever Docker's NAT can reach.
-FROM deps AS cast-server
+#
+# Installs from its own minimal package.json (src/cast-server/package.json)
+# instead of the shared `deps` stage — this bridge only needs ws/castv2-client/
+# bonjour-service/tsx, not the full monorepo's dependencies (Electron, mpv,
+# etc.), which are unnecessary weight here and slow/unreliable to install
+# under QEMU cross-platform emulation in CI.
+FROM node:23-alpine AS cast-server-deps
+WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@11.5.2 --activate
+COPY src/cast-server/package.json ./package.json
+COPY pnpm-workspace.yaml .
+RUN pnpm install
+
+FROM cast-server-deps AS cast-server
+COPY . .
 ENV CAST_SERVER_PORT=9181
 EXPOSE 9181
-CMD ["pnpm", "run", "cast-server"]
+CMD ["node_modules/.bin/tsx", "--tsconfig", "src/cast-server/tsconfig.json", "src/cast-server/index.ts"]
 
 # --- Production stage
 FROM nginxinc/nginx-unprivileged:alpine-slim
