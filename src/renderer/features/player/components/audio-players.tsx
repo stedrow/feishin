@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { eventEmitter } from '/@/renderer/events/event-emitter';
 import { UserFavoriteEventPayload, UserRatingEventPayload } from '/@/renderer/events/events';
 import { DiscordRpcHook } from '/@/renderer/features/discord-rpc/use-discord-rpc';
+import { CastPlayer } from '/@/renderer/features/player/audio-player/cast-player';
+import { CastConnectionHook } from '/@/renderer/features/player/audio-player/hooks/use-cast-connection';
 import { MainPlayerListenerHook } from '/@/renderer/features/player/audio-player/hooks/use-main-player-listener';
 import { JukeboxPlayer } from '/@/renderer/features/player/audio-player/jukebox-player';
 import { MpvPlayer } from '/@/renderer/features/player/audio-player/mpv-player';
@@ -39,6 +41,7 @@ import {
     usePlaybackType,
     useSettingsStoreActions,
 } from '/@/renderer/store';
+import { useIsCasting } from '/@/renderer/store/cast.store';
 import { logFn } from '/@/renderer/utils/logger';
 import { toast } from '/@/shared/components/toast/toast';
 import { LibraryItem } from '/@/shared/types/domain-types';
@@ -136,6 +139,7 @@ export const AudioPlayers = () => {
             <MediaSessionHook />
             <PlaybackHotkeysHook />
             <RemoteHook />
+            <CastConnectionHook />
             <AutoDJHook />
             <QueueRestoreTimestampHook />
             <InitialTimestampRestoreHook />
@@ -178,6 +182,7 @@ const AudioPlayersContent = ({
     webAudio: boolean;
 }) => {
     const isRadioActive = useIsRadioActive();
+    const isCasting = useIsCasting();
 
     useEffect(() => {
         if (webAudio && 'AudioContext' in window) {
@@ -316,6 +321,10 @@ const AudioPlayersContent = ({
             eventEmitter.off('USER_RATING', handleRating);
         };
     }, [serverId]);
+
+    if (isCasting) {
+        return <CastPlayer />;
+    }
 
     if (isRadioActive && playbackType === PlayerType.LOCAL) {
         return <MpvPlayer />;

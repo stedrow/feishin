@@ -6,6 +6,7 @@
     "vite.react-plugin.ts",
     "src/main/**/*",
     "src/preload/**/*",
+    "src/cast-server/**/*",
     "src/i18n/**/*",
     "src/types/**/*",
     "src/shared/**/*"

@@ -206,6 +206,24 @@ export enum TableColumn {
     YEAR = 'releaseYear',
 }
 
+export type CastDevice = {
+    host: string;
+    id: string;
+    name: string;
+    port: number;
+};
+
+export type CastQueueItem = {
+    album?: string;
+    artist?: string;
+    contentId: string;
+    contentType: string;
+    duration?: number;
+    id: string;
+    imageUrl?: string;
+    title: string;
+};
+
 export type DiscoveredServerItem = {
     name: string;
     type: ServerType;

@@ -2,6 +2,7 @@
 
 window.SERVER_URL = "${SERVER_URL}";
 window.REMOTE_URL = "${REMOTE_URL}";
+window.CAST_SERVER_URL = "${CAST_SERVER_URL}";
 window.SERVER_NAME = "${SERVER_NAME}";
 window.SERVER_TYPE = "${SERVER_TYPE}";
 window.SERVER_LOCK = "${SERVER_LOCK}";

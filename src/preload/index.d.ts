@@ -3,6 +3,7 @@ import { PreloadApi } from './index';
 declare global {
     interface Window {
         api: PreloadApi;
+        CAST_SERVER_URL?: string;
         LEGACY_AUTHENTICATION?: boolean;
         queryLocalFonts?: () => Promise<Font[]>;
         REMOTE_URL?: string;

@@ -11,6 +11,26 @@ services:
             # - REMOTE_URL=http://share.localhost # Used for compatibility with external functionality, such as custom sharing URLs on Navidrome
             - LEGACY_AUTHENTICATION=false # When SERVER_LOCK is true, sets the legacyauth flag for server authentication (true or false)
             - ANALYTICS_DISABLED=false # Set to true to disable Umami analytics tracking
+            # - CAST_SERVER_URL=ws://localhost:9181 # Enables Chromecast casting in the browser (any browser, not just Chrome). Point at the feishin-cast-server service below.
         ports:
             - 9180:9180
             # Alternatively, to restrict to only localhost, - 127.0.0.1:9180:8190
+
+    # Optional: enables Chromecast casting from the web UI in any browser (Chrome's
+    # own native Cast sender only works in Chrome/Edge; this bridges the gap by
+    # doing the actual CastV2 session server-side instead). Not required if you
+    # only use the desktop/Electron app, which casts natively without this.
+    #
+    # Chromecast discovery needs multicast DNS reachability to your LAN, so this
+    # service needs host networking (Linux only — Docker Desktop on Mac/Windows
+    # does not expose real host networking, so discovery there is limited to
+    # whatever Docker's NAT can reach).
+    # feishin-cast-server:
+    #     container_name: feishin-cast-server
+    #     build:
+    #         context: .
+    #         target: cast-server
+    #     restart: unless-stopped
+    #     network_mode: host
+    #     environment:
+    #         - CAST_SERVER_PORT=9181

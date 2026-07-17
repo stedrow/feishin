@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState, WheelEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PopoverPlayQueue } from '/@/renderer/features/now-playing/components/popover-play-queue';
+import { CastButton } from '/@/renderer/features/player/components/cast-button';
 import { PlayerConfig } from '/@/renderer/features/player/components/player-config';
 import { CustomPlayerbarSlider } from '/@/renderer/features/player/components/playerbar-slider';
 import { SleepTimerButton } from '/@/renderer/features/player/components/sleep-timer-button';
@@ -95,6 +96,7 @@ export const RightControls = () => {
                 <LyricsButton />
                 <FavoriteButton />
                 <QueueButton />
+                <CastButton />
                 <VolumeButton />
             </Group>
             <Group h="calc(100% / 3)" />
