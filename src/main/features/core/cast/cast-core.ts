@@ -136,7 +136,8 @@ export class CastCore extends EventEmitter {
     load(data: CastLoadData): Promise<unknown> {
         if (!this.player) return Promise.resolve(null);
 
-        const items = data.items.map((item) => ({ ...toCastMediaItem(item), autoplay: true }));
+        const autoplay = data.autoplay ?? true;
+        const items = data.items.map((item) => ({ ...toCastMediaItem(item), autoplay }));
 
         this.log(`queueLoad sending ${items.length} items, startIndex ${data.startIndex ?? 0}`);
 

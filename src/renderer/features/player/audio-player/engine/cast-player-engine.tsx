@@ -110,6 +110,14 @@ export const CastPlayerEngine = (props: CastPlayerEngineProps) => {
                 loadingTrackIdRef.current = null;
                 loadedCurrentTrackIdRef.current = currentItem.id;
                 loadedNextTrackIdRef.current = nextItem?.id ?? null;
+
+                // Belt-and-suspenders: the Cast receiver doesn't always reliably honor
+                // each queue item's `autoplay` flag on rapid successive reloads, leaving
+                // the new track loaded but paused. An explicit play() here is a harmless
+                // no-op if it's already playing.
+                if (playerStatus === PlayerStatus.PLAYING) {
+                    transport.play();
+                }
             });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [enabled, currentItem, nextItem, transport]);

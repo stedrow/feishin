@@ -45,7 +45,7 @@ export const CastButton = () => {
             <Popover.Target>
                 <ActionIcon
                     icon="cast"
-                    iconProps={{ color: connectedDevice ? 'primary' : undefined }}
+                    iconProps={{ color: connectedDevice ? 'primary' : undefined, size: 'lg' }}
                     loading={connecting}
                     onClick={(e) => e.stopPropagation()}
                     size="sm"
