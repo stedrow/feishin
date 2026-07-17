@@ -27,9 +27,11 @@ services:
     # whatever Docker's NAT can reach).
     # feishin-cast-server:
     #     container_name: feishin-cast-server
-    #     build:
-    #         context: .
-    #         target: cast-server
+    #     image: "ghcr.io/stedrow/feishin-cast-server:latest" # published via .github/workflows/publish-docker-cast-server.yml
+    #     # Alternative: build locally instead of pulling —
+    #     # build:
+    #     #     context: .
+    #     #     target: cast-server
     #     restart: unless-stopped
     #     network_mode: host
     #     environment:
