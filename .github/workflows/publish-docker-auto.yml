@@ -15,7 +15,6 @@ on:
 
 env:
     REGISTRY: ghcr.io
-    IMAGE_NAME: ${{ github.repository }}
 
 jobs:
     build-and-push-image:
@@ -23,6 +22,13 @@ jobs:
         permissions:
             contents: read
             packages: write
+        strategy:
+            matrix:
+                include:
+                    - image_suffix: ''
+                      target: ''
+                    - image_suffix: '-cast-server'
+                      target: 'cast-server'
         steps:
             - name: Checkout repository
               uses: actions/checkout@v6
@@ -36,7 +42,7 @@ jobs:
               id: meta
               uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
               with:
-                  images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+                  images: ${{ env.REGISTRY }}/${{ github.repository }}${{ matrix.image_suffix }}
                   tags: |
                       type=raw,value=${{ inputs.tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
                       type=semver,pattern={{version}},enable=${{ github.event_name == 'push' }}
@@ -51,6 +57,7 @@ jobs:
               with:
                   context: .
                   push: true
+                  target: ${{ matrix.target }}
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
                   platforms: |
