@@ -65,6 +65,13 @@ export const CastPlayerEngine = (props: CastPlayerEngineProps) => {
     const loadedNextTrackIdRef = useRef<null | string>(null);
     const itemIdByTrackIdRef = useRef<Map<string, number>>(new Map());
     const loadingTrackIdRef = useRef<null | string>(null);
+    // Last playing/paused state we know the Cast device is actually in (updated from
+    // MEDIA_STATUS broadcasts). Lets the Play/pause matcher tell "the device just told
+    // us it's playing" apart from "the user pressed play in Feishin's own UI" — without
+    // this, syncing playerStatus from a status broadcast re-triggers the matcher, which
+    // re-sends the same command, which some devices (seen on a Google Home Mini) answer
+    // with a brief transient status that gets picked up as new info, forever.
+    const devicePlayingRef = useRef<boolean | null>(null);
 
     // Load (or reload) the Cast device's current+next queue whenever Feishin's current
     // track changes — covers first connect, natural end-of-track advance, and manual
@@ -84,6 +91,7 @@ export const CastPlayerEngine = (props: CastPlayerEngineProps) => {
             loadedCurrentTrackIdRef.current = null;
             loadedNextTrackIdRef.current = null;
             loadingTrackIdRef.current = null;
+            devicePlayingRef.current = false;
             itemIdByTrackIdRef.current.clear();
             return;
         }
@@ -117,6 +125,7 @@ export const CastPlayerEngine = (props: CastPlayerEngineProps) => {
                 // no-op if it's already playing.
                 if (playerStatus === PlayerStatus.PLAYING) {
                     transport.play();
+                    devicePlayingRef.current = true;
                 }
             });
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -148,17 +157,26 @@ export const CastPlayerEngine = (props: CastPlayerEngineProps) => {
     }, [enabled, currentItem, nextItem, transport]);
 
     // Play/pause matcher — only once a session actually exists, so this never races
-    // ahead of the load effect above (see loadedCurrentTrackIdRef comment).
+    // ahead of the load effect above (see loadedCurrentTrackIdRef comment). Skips
+    // sending anything if the device is already known to be in the desired state (see
+    // devicePlayingRef above) — otherwise this becomes a feedback loop with the status
+    // listener below.
     useEffect(() => {
         if (!enabled || !loadedCurrentTrackIdRef.current) {
             return;
         }
 
-        if (playerStatus === PlayerStatus.PLAYING) {
+        const shouldPlay = playerStatus === PlayerStatus.PLAYING;
+        if (devicePlayingRef.current === shouldPlay) {
+            return;
+        }
+
+        if (shouldPlay) {
             transport.play();
         } else {
             transport.pause();
         }
+        devicePlayingRef.current = shouldPlay;
     }, [enabled, playerStatus, transport]);
 
     // Volume matcher
@@ -194,6 +212,8 @@ export const CastPlayerEngine = (props: CastPlayerEngineProps) => {
             const playing = status?.playerState === 'PLAYING';
             const position = status?.currentTime ?? 0;
             const volumeLevel = status?.volume?.level ?? 1;
+
+            devicePlayingRef.current = playing;
 
             let trackId: null | string = null;
             if (
