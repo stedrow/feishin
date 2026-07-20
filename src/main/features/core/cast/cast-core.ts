@@ -256,10 +256,12 @@ function toCastMediaItem(item: CastQueueItem) {
             contentId: item.contentId,
             contentType: item.contentType,
             metadata: {
+                albumName: item.album,
+                artist: item.artist,
                 images: item.imageUrl ? [{ url: item.imageUrl }] : [],
                 metadataType: 3,
                 songName: item.title,
-                subtitle: item.album,
+                subtitle: item.artist,
                 title: item.title,
                 type: 0,
             },
