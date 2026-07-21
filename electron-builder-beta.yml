@@ -68,7 +68,7 @@ toolsets:
 npmRebuild: false
 publish:
     provider: github
-    owner: jeffvli
+    owner: stedrow
     repo: feishin
     channel: beta
     releaseType: draft
