@@ -42,7 +42,7 @@ import {
     useSettingsStoreActions,
 } from '/@/renderer/store';
 import { useIsCasting } from '/@/renderer/store/cast.store';
-import { logFn } from '/@/renderer/utils/logger';
+import { logger } from '/@/renderer/utils/logger';
 import { toast } from '/@/shared/components/toast/toast';
 import { LibraryItem } from '/@/shared/types/domain-types';
 import { PlayerType } from '/@/shared/types/types';
@@ -102,7 +102,7 @@ function detectBrowserProfile() {
         }
     }
 
-    logFn.info('DIRECT_PLAY_PROFILES', { meta: DIRECT_PLAY_PROFILES });
+    logger.debug('DIRECT_PLAY_PROFILES', DIRECT_PLAY_PROFILES);
 
     return DIRECT_PLAY_PROFILES;
 }
@@ -162,6 +162,8 @@ export const AudioPlayers = () => {
     );
 };
 
+const mpvPlayerListener = isElectron() ? window.api.mpvPlayerListener : null;
+
 const AudioPlayersContent = ({
     audioContext,
     audioDeviceId,
@@ -183,6 +185,24 @@ const AudioPlayersContent = ({
 }) => {
     const isRadioActive = useIsRadioActive();
     const isCasting = useIsCasting();
+
+    useEffect(() => {
+        logger.info('Playback engine', { playbackType });
+    }, [playbackType]);
+
+    useEffect(() => {
+        if (!mpvPlayerListener) {
+            return;
+        }
+
+        mpvPlayerListener.rendererPlayerFallback((isFallback: boolean) => {
+            if (isFallback) {
+                logger.warn('Playback engine fell back to web');
+            } else {
+                logger.info('Playback engine using local (mpv)');
+            }
+        });
+    }, []);
 
     useEffect(() => {
         if (webAudio && 'AudioContext' in window) {

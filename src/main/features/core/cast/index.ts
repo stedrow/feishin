@@ -1,13 +1,17 @@
 import { ipcMain } from 'electron';
 
 import { getMainWindow } from '../../../index';
-import { createLog } from '../../../utils';
 import { CastCore, CastLoadData, CastQueueInsertData } from './cast-core';
 
+import log from '/@/main/logger';
 import { CastDevice } from '/@/shared/types/types';
 
 const core = new CastCore((message, isError) => {
-    createLog({ message: `[CAST] ${message}`, type: isError ? 'error' : 'info' });
+    if (isError) {
+        log.error(`[CAST] ${message}`);
+    } else {
+        log.info(`[CAST] ${message}`);
+    }
 });
 
 core.on('devices', (devices: CastDevice[]) => {

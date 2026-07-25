@@ -120,7 +120,13 @@
         "numberOfResults": "{{numberOfResults}} 項結果",
         "grouping": "分組",
         "back": "返回",
-        "openFolder": "開啟資料夾"
+        "openFolder": "開啟資料夾",
+        "saveAndClose": "儲存並關閉",
+        "undo": "還原",
+        "lastScan": "上次掃描 {{date}}",
+        "scanFolderCount": "{{count}} 個資料夾",
+        "scanItemCount": "{{count}} 個項目",
+        "scanningLibrary": "正在掃描媒體庫…"
     },
     "error": {
         "endpointNotImplementedError": "{{serverType}} 尚未實作端點 {{endpoint}}",
@@ -183,7 +189,8 @@
             "goToAlbum": "前往$t(entity.album, {\"count\": 1})",
             "goToAlbumArtist": "前往 $t(entity.albumArtist, {\"count\": 1})",
             "moveItems": "$t(action.moveItems)",
-            "goTo": "前往"
+            "goTo": "前往",
+            "editMetadata": "編輯後設資料"
         },
         "globalSearch": {
             "title": "指令",
@@ -194,7 +201,7 @@
             }
         },
         "home": {
-            "explore": "探索你的音樂庫",
+            "explore": "探索你的媒體庫",
             "recentlyPlayed": "最近播放",
             "title": "$t(common.home)",
             "mostPlayed": "最多播放",
@@ -218,7 +225,8 @@
             "selectMusicFolder": "選擇媒體庫",
             "noMusicFolder": "未選取任何媒體庫",
             "multipleMusicFolders": "已選取 {{count}} 個媒體庫",
-            "commandPalette": "開啟命令面板"
+            "commandPalette": "開啟命令面板",
+            "logout": "登出"
         },
         "fullscreenPlayer": {
             "config": {
@@ -300,21 +308,21 @@
             "showTracks": "顯示 $t(entity.genre, {\"count\": 1}) $t(entity.track, {\"count\": 2})"
         },
         "sidebar": {
-            "albumArtists": "$t(entity.albumArtist, {\"count\": 2})",
-            "albums": "$t(entity.album, {\"count\": 2})",
-            "artists": "$t(entity.artist, {\"count\": 2})",
-            "folders": "$t(entity.folder, {\"count\": 2})",
-            "search": "$t(common.search)",
-            "settings": "$t(common.setting, {\"count\": 2})",
-            "tracks": "$t(entity.track, {\"count\": 2})",
-            "genres": "$t(entity.genre, {\"count\": 2})",
-            "home": "$t(common.home)",
+            "albumArtists": "專輯藝人",
+            "albums": "專輯",
+            "artists": "藝人",
+            "folders": "資料夾",
+            "search": "搜尋",
+            "settings": "設定",
+            "tracks": "曲目",
+            "genres": "曲風",
+            "home": "首頁",
             "nowPlaying": "正在播放",
-            "playlists": "$t(entity.playlist, {\"count\": 2})",
+            "playlists": "播放清單",
             "myLibrary": "我的媒體庫",
-            "shared": "共享$t(entity.playlist, {\"count\": 2})",
-            "favorites": "$t(entity.favorite, {\"count\": 2})",
-            "radio": "$t(entity.radioStation, {\"count\": 2})",
+            "shared": "共享播放清單",
+            "favorites": "收藏",
+            "radio": "電台",
             "collections": "收藏集"
         },
         "trackList": {
@@ -350,7 +358,27 @@
         "itemDetail": {
             "copyPath": "複製路徑至剪貼簿",
             "copiedPath": "成功複製路徑",
-            "openFile": "在檔案管理器中顯示曲目"
+            "openFile": "在檔案管理器中顯示曲目",
+            "tagConfiguration": "標籤配置",
+            "addTagConfig": "新增標籤…",
+            "multiValueToggle": "多重值",
+            "autocompleteSource": "自動完成來源",
+            "customValues": "自訂值",
+            "addCustomValue": "新增自訂值…",
+            "serverSuggestions": "伺服器",
+            "fileNotWritable": "檔案無法訪問或無法寫入",
+            "triggerRescan": "儲存後重新掃描媒體庫",
+            "addField": "新增欄位…",
+            "emptyFields": "欄位不可為空",
+            "tagsTab": "標籤",
+            "artworkTab": "專輯照",
+            "removeArtwork": "移除專輯照",
+            "noArtwork": "無專輯照",
+            "multipleValues": "(多重值)",
+            "multipleArtworks": "多重專輯照",
+            "noLocalSongs": "未找到具有本地檔案路徑的歌曲",
+            "readPartialFailure": "{{count}} 個檔案無法讀取後設資料 (共 {{total}} 個)",
+            "writePartialFailure": "{{count}} 個檔案儲存失敗"
         },
         "playlist": {
             "reorder": "僅當按 ID 排序時才啟用重新排序"
@@ -528,7 +556,7 @@
         "replayGainFallback": "{{ReplayGain}}後備替代",
         "replayGainFallback_description": "歌曲沒有{{ReplayGain}}標籤時使用的增益（以分貝為單位）",
         "replayGainMode": "{{ReplayGain}}模式",
-        "replayGainMode_description": "根據歌曲標籤中儲存的{{ReplayGain}}值調整音量增益",
+        "replayGainMode_description": "根據歌曲後設資料中儲存的{{ReplayGain}}值調整音量增益",
         "replayGainMode_optionAlbum": "$t(entity.album, {\"count\": 1})",
         "replayGainMode_optionNone": "$t(common.none)",
         "replayGainMode_optionTrack": "$t(entity.track, {\"count\": 1})",
@@ -587,7 +615,7 @@
         "replayGainClipping_description": "自動降低增益以防止{{ReplayGain}}造成削波",
         "showSkipButtons": "顯示跳過按鈕",
         "themeDark_description": "應用程式將使用深色主題",
-        "clearQueryCache_description": "Feishin 的「軟清除」。這將會刷新播放清單、曲目標籤並重置儲存的歌詞。會保留設定、伺服器憑證和暫存圖片",
+        "clearQueryCache_description": "Feishin 的「軟清除」。這將會刷新播放清單、曲目後設資料並重置儲存的歌詞。會保留設定、伺服器憑證和暫存圖片",
         "clearCache": "清除瀏覽器快取",
         "clearCache_description": "Feishin 的「硬清除」。除了清除 Feishin 的快取、清除瀏覽器快取（儲存的圖片和其他資源）。會保留伺服器憑證和設定",
         "clearQueryCache": "清除 Feishin 快取",
@@ -731,11 +759,9 @@
         "autoDJ_timing_description": "佇列中剩餘多少歌曲時啟動 Auto DJ",
         "autoDJ_timing": "觸發時機",
         "logLevel": "日誌等級",
-        "logLevel_description": "設定要顯示的最低日誌等級。Debug 會顯示所有日誌，Error 僅會顯示錯誤訊息",
+        "logLevel_description": "設定要顯示的最低日誌等級",
         "logLevel_optionDebug": "Debug",
-        "logLevel_optionError": "Error",
         "logLevel_optionInfo": "Info",
-        "logLevel_optionWarn": "Warn",
         "useThemeAccentColor": "使用主題強調色",
         "useThemeAccentColor_description": "使用所選主題中定義的主要顏色，而非自訂的強調色",
         "artistRadioCount_description": "設定要為藝人電台與曲目電台擷取的歌曲數量",
@@ -883,7 +909,16 @@
         "microtonalPitchControls": "微音程音高控制",
         "microtonalPitchControls_description": "新增更多音高控制選項，以在半音之間進行微調",
         "hotkey_playbackNextAlbum": "下一張專輯",
-        "hotkey_playbackPreviousAlbum": "上一張專輯"
+        "hotkey_playbackPreviousAlbum": "上一張專輯",
+        "logLevel_optionDebugDescription": "包含 info，另外提供詳細的 debug 資訊與已遮蔽的 API 回應",
+        "logLevel_optionInfoDescription": "包含 info、warnings 以及 errors",
+        "exportDiagnostics": "匯出診斷",
+        "autoDJ_allowDuplicates": "允許重複",
+        "autoDJ_allowDuplicates_description": "允許 Auto DJ 再次新增已在佇列中的歌曲或專輯",
+        "autoDJ_onlySimilar": "只有相似",
+        "autoDJ_onlySimilar_description": "僅新增與觸發歌曲相似的項目。項目數量視為新增項目的上限，而非透過其他來源填滿至上限",
+        "showQueueInSidebar_description": "播放器側邊欄將新增一個顯示播放佇列的面板",
+        "showQueueInSidebar": "在播放器側邊欄中顯示播放佇列"
     },
     "table": {
         "config": {
@@ -920,7 +955,7 @@
                 "showHeader": "顯示標題",
                 "albumGroupConfig": "專輯群組設定",
                 "albumImageSize": "專輯圖片大小",
-                "albumGroupMetadata": "中繼資料欄位",
+                "albumGroupMetadata": "後設資料欄位",
                 "albumGroupShowFavoriteRating": "顯示收藏與評分",
                 "albumGroupVerticalLayout": "垂直佈局"
             },

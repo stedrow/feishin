@@ -538,6 +538,7 @@ export const GeneralSettingsSchema = z.object({
     qobuz: z.boolean(),
     resume: z.boolean(),
     showLyricsInSidebar: z.boolean(),
+    showQueueInSidebar: z.boolean(),
     showRatings: z.boolean(),
     showVisualizerInSidebar: z.boolean(),
     sidebarCollapsedNavigation: z.boolean(),
@@ -557,9 +558,14 @@ export const GeneralSettingsSchema = z.object({
     sideQueueType: SideQueueTypeSchema,
     skipButtons: SkipButtonsSchema,
     spotify: z.boolean(),
-    theme: z.nativeEnum(AppTheme),
-    themeDark: z.nativeEnum(AppTheme),
-    themeLight: z.nativeEnum(AppTheme),
+    // Accepts either a built-in AppTheme id or a custom theme id (the
+    // filename, without extension, of a JSON file in the themes folder).
+    // Custom theme ids aren't statically known, so this can't be a
+    // nativeEnum(AppTheme) any more; getAppTheme() falls back to the
+    // default theme if the stored id doesn't resolve to anything.
+    theme: z.string(),
+    themeDark: z.string(),
+    themeLight: z.string(),
     useThemeAccentColor: z.boolean(),
     useThemePrimaryShade: z.boolean(),
     volumeWheelStep: z.number(),
@@ -741,12 +747,43 @@ const autoDjStrategyEnum = z.enum(['similar', 'library_random']);
 
 const AutoDJSettingsSchema = z.object({
     albumStrategy: autoDjStrategyEnum,
+    allowDuplicates: z.boolean(),
     enabled: z.boolean(),
     itemCount: z.number(),
     mode: z.enum(['songs', 'albums']),
+    onlySimilar: z.boolean(),
     songStrategy: autoDjStrategyEnum,
     timing: z.number(),
 });
+
+const TagAutocompleteSourceSchema = z.string();
+
+const TagConfigSchema = z.object({
+    autocompleteSource: TagAutocompleteSourceSchema,
+    customValues: z.array(z.string()),
+    multiValue: z.boolean(),
+});
+
+const TagEditorSettingsSchema = z.object({
+    tagConfigs: z.record(z.string(), TagConfigSchema),
+    triggerRescan: z.boolean(),
+});
+
+export type TagAutocompleteSource = string;
+export type TagConfig = z.infer<typeof TagConfigSchema>;
+
+export const SERVER_TAG_AUTOCOMPLETE_PREFIX = 'tag:';
+
+export const isServerTagAutocompleteSource = (source: string): boolean =>
+    source.startsWith(SERVER_TAG_AUTOCOMPLETE_PREFIX);
+
+export const getServerTagAutocompleteName = (source: string): null | string =>
+    isServerTagAutocompleteSource(source)
+        ? source.slice(SERVER_TAG_AUTOCOMPLETE_PREFIX.length)
+        : null;
+
+export const toServerTagAutocompleteSource = (tagName: string): string =>
+    `${SERVER_TAG_AUTOCOMPLETE_PREFIX}${tagName}`;
 
 /**
  * This schema is used for validation of the imported settings json
@@ -771,6 +808,7 @@ export const ValidationSettingsStateSchema = z.object({
         z.literal('window'),
         z.string(),
     ]),
+    tagEditor: TagEditorSettingsSchema,
     visualizer: VisualizerSettingsSchema,
     window: WindowSettingsSchema,
 });
@@ -1184,9 +1222,11 @@ const platformDefaultWindowBarStyle: Platform = getPlatformDefaultWindowBarStyle
 const initialState: SettingsState = {
     autoDJ: {
         albumStrategy: AUTO_DJ_STRATEGY.SIMILAR,
+        allowDuplicates: false,
         enabled: false,
         itemCount: 5,
         mode: 'songs',
+        onlySimilar: false,
         songStrategy: AUTO_DJ_STRATEGY.SIMILAR,
         timing: 1,
     },
@@ -1275,6 +1315,7 @@ const initialState: SettingsState = {
         qobuz: true,
         resume: true,
         showLyricsInSidebar: true,
+        showQueueInSidebar: true,
         showRatings: true,
         showVisualizerInSidebar: true,
         sidebarCollapsedNavigation: true,
@@ -1997,6 +2038,56 @@ const initialState: SettingsState = {
         username: 'feishin',
     },
     tab: 'general',
+    tagEditor: {
+        tagConfigs: {
+            albumArtist: {
+                autocompleteSource: 'serverArtists',
+                customValues: [],
+                multiValue: false,
+            },
+            ALBUMARTISTS: {
+                autocompleteSource: 'serverArtists',
+                customValues: [],
+                multiValue: true,
+            },
+            albumArtistSort: {
+                autocompleteSource: 'serverArtists',
+                customValues: [],
+                multiValue: false,
+            },
+            ALBUMARTISTSSORT: {
+                autocompleteSource: 'serverArtists',
+                customValues: [],
+                multiValue: false,
+            },
+            artist: {
+                autocompleteSource: 'serverArtists',
+                customValues: [],
+                multiValue: true,
+            },
+            ARTISTS: {
+                autocompleteSource: 'serverArtists',
+                customValues: [],
+                multiValue: true,
+            },
+            artistSort: {
+                autocompleteSource: 'serverArtists',
+                customValues: [],
+                multiValue: false,
+            },
+            ARTISTSSORT: {
+                autocompleteSource: 'serverArtists',
+                customValues: [],
+                multiValue: false,
+            },
+            genre: {
+                autocompleteSource: 'serverGenres',
+                customValues: [],
+                multiValue: true,
+            },
+        },
+        triggerRescan: true,
+    },
     visualizer: {
         audiomotionanalyzer: {
             alphaBars: false,
@@ -2620,10 +2711,32 @@ export const useSettingsStore = createWithEqualityFn<SettingsSlice>()(
                     }
                 }
 
+                if (version < 32) {
+                    const tagConfigs = state.tagEditor?.tagConfigs;
+                    if (tagConfigs) {
+                        for (const key of [
+                            'albumArtistSort',
+                            'ALBUMARTISTSSORT',
+                            'artistSort',
+                            'ARTISTSSORT',
+                        ] as const) {
+                            if (tagConfigs[key]) {
+                                tagConfigs[key].multiValue = false;
+                            }
+                        }
+                    }
+                }
+
+                if (version < 33) {
+                    if (state.general.showQueueInSidebar === undefined) {
+                        state.general.showQueueInSidebar = true;
+                    }
+                }
+
                 return persistedState;
             },
             name: 'store_settings',
-            version: 31,
+            version: 33,
         },
     ),
 );
@@ -2691,6 +2804,8 @@ export const useCssSettings = () => useSettingsStore((state) => state.css, shall
 
 export const useQueryBuilderSettings = () =>
     useSettingsStore((state) => state.queryBuilder, shallow);
+
+export const useTagEditorSettings = () => useSettingsStore((state) => state.tagEditor, shallow);
 
 const getSettingsStoreVersion = () => useSettingsStore.persist.getOptions().version!;
 
@@ -2894,6 +3009,9 @@ export const useCombinedLyricsAndVisualizer = () =>
 
 export const useShowLyricsInSidebar = () =>
     useSettingsStore((state) => state.general.showLyricsInSidebar, shallow);
+
+export const useShowQueueInSidebar = () =>
+    useSettingsStore((state) => state.general.showQueueInSidebar, shallow);
 
 export const useShowVisualizerInSidebar = () =>
     useSettingsStore((state) => state.general.showVisualizerInSidebar, shallow);
