@@ -7,7 +7,6 @@ import { getServerById, useAuthStore, useSettingsStore } from '/@/renderer/store
 import { logger } from '/@/renderer/utils/logger';
 import { toast } from '/@/shared/components/toast/toast';
 import {
-    AuthenticationResponse,
     ControllerEndpoint,
     InternalControllerEndpoint,
     ServerType,
@@ -211,15 +210,7 @@ const addContext = <T extends { apiClientProps: any; context?: any }>(args: T): 
     };
 };
 
-export interface GeneralController extends Omit<Required<ControllerEndpoint>, 'authenticate'> {
-    authenticate: (
-        url: string,
-        body: { legacy?: boolean; password: string; username: string },
-        type: ServerType,
-    ) => Promise<AuthenticationResponse>;
-}
-
-export const controller: GeneralController = {
+export const controller = {
     addToPlaylist(args) {
         const server = getServerById(args.apiClientProps.serverId);
 
@@ -532,6 +523,18 @@ export const controller: GeneralController = {
 
         return apiController(
             'getDownloadUrl',
+            server.type,
+        )?.(addContext({ ...args, apiClientProps: { ...args.apiClientProps, server } }));
+    },
+    getFavoriteSongs(args) {
+        const server = getServerById(args.apiClientProps.serverId);
+
+        if (!server) {
+            throw new Error(`${i18n.t('error.apiRouteError')}: getFavoriteSongs`);
+        }
+
+        return apiController(
+            'getFavoriteSongs',
             server.type,
         )?.(addContext({ ...args, apiClientProps: { ...args.apiClientProps, server } }));
     },
@@ -1043,6 +1046,18 @@ export const controller: GeneralController = {
 
         return apiController(
             'shareItem',
+            server.type,
+        )?.(addContext({ ...args, apiClientProps: { ...args.apiClientProps, server } }));
+    },
+    startLibraryScan(args) {
+        const server = getServerById(args.apiClientProps.serverId);
+
+        if (!server) {
+            throw new Error(`${i18n.t('error.apiRouteError')}: startLibraryScan`);
+        }
+
+        return apiController(
+            'startLibraryScan',
             server.type,
         )?.(addContext({ ...args, apiClientProps: { ...args.apiClientProps, server } }));
     },

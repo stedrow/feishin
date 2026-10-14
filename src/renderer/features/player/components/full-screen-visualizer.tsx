@@ -1,13 +1,18 @@
+import clsx from 'clsx';
 import { motion, Variants } from 'motion/react';
-import { lazy, memo, ReactNode, Suspense, useLayoutEffect, useRef } from 'react';
+import { lazy, memo, ReactNode, Suspense, useEffect, useLayoutEffect, useRef } from 'react';
 import { useLocation } from 'react-router';
 
 import styles from './full-screen-visualizer.module.css';
 
 import { FullScreenVisualizerSongInfo } from '/@/renderer/features/player/components/full-screen-visualizer-song-info';
+import { VISUALIZER_FULLSCREEN_TARGET_ID } from '/@/renderer/hooks/use-fullscreen-toggle';
 import { useHotkeys } from '/@/renderer/hooks/use-hotkeys';
 import { useIsMobile } from '/@/renderer/hooks/use-is-mobile';
-import { useFullScreenPlayerStoreActions } from '/@/renderer/store/full-screen-player.store';
+import {
+    useFullScreenPlayerStore,
+    useFullScreenPlayerStoreActions,
+} from '/@/renderer/store/full-screen-player.store';
 import {
     usePlaybackSettings,
     useSettingsStore,
@@ -28,77 +33,20 @@ const ButterchurnVisualizer = lazy(() =>
 );
 
 const containerVariants: Variants = {
-    closed: (custom) => {
-        const { isMobile, windowBarStyle } = custom;
-        const height =
-            windowBarStyle === Platform.WINDOWS || windowBarStyle === Platform.MACOS
-                ? 'calc(100vh - 120px)'
-                : 'calc(100vh - 90px)';
-
-        if (isMobile) {
-            return {
-                height,
-                position: 'absolute',
-                top: '100vh',
-                transition: {
-                    duration: 0.5,
-                    ease: 'easeInOut',
-                },
-                width: '100vw',
-                y: 0,
-            };
-        }
-        return {
-            height,
-            position: 'absolute',
-            top: '100vh',
-            transition: {
-                duration: 0.5,
-                ease: 'easeInOut',
-            },
-            width: '100vw',
-            y: 0,
-        };
+    closed: {
+        transition: {
+            duration: 0.5,
+            ease: 'easeInOut',
+        },
+        y: '100%',
     },
-    open: (custom) => {
-        const { isMobile, windowBarStyle } = custom;
-        const height =
-            windowBarStyle === Platform.WINDOWS || windowBarStyle === Platform.MACOS
-                ? 'calc(100vh - 120px)'
-                : 'calc(100vh - 90px)';
-        const topOffset =
-            windowBarStyle === Platform.WINDOWS || windowBarStyle === Platform.MACOS
-                ? '30px'
-                : '0px';
-
-        if (isMobile) {
-            return {
-                height,
-                left: 0,
-                position: 'absolute',
-                top: topOffset,
-                transition: {
-                    delay: 0.1,
-                    duration: 0.5,
-                    ease: 'easeInOut',
-                },
-                width: '100vw',
-                y: 0,
-            };
-        }
-        return {
-            height,
-            left: 0,
-            position: 'absolute',
-            top: 0,
-            transition: {
-                delay: 0.1,
-                duration: 0.5,
-                ease: 'easeInOut',
-            },
-            width: '100vw',
-            y: 0,
-        };
+    open: {
+        transition: {
+            delay: 0.1,
+            duration: 0.5,
+            ease: 'easeInOut',
+        },
+        y: 0,
     },
 };
 
@@ -110,11 +58,15 @@ interface VisualizerContainerProps {
 
 const VisualizerContainer = memo(
     ({ children, isMobile, windowBarStyle }: VisualizerContainerProps) => {
+        const hasWindowBar =
+            windowBarStyle === Platform.WINDOWS || windowBarStyle === Platform.MACOS;
         return (
             <motion.div
                 animate="open"
-                className={styles.container}
-                custom={{ isMobile, windowBarStyle }}
+                className={clsx(styles.container, {
+                    [styles.mobileContainer]: isMobile,
+                    [styles.mobileContainerWithWindowBar]: isMobile && hasWindowBar,
+                })}
                 exit="closed"
                 initial="closed"
                 transition={{ duration: 2 }}
@@ -130,6 +82,7 @@ VisualizerContainer.displayName = 'VisualizerContainer';
 
 export const FullScreenVisualizer = () => {
     const { setStore } = useFullScreenPlayerStoreActions();
+    const { visualizerReturnToPlayer } = useFullScreenPlayerStore();
     const { windowBarStyle } = useWindowSettings();
     const { webAudio } = usePlaybackSettings();
     const visualizerType = useSettingsStore((store) => store.visualizer.type);
@@ -139,14 +92,32 @@ export const FullScreenVisualizer = () => {
     const isOpenedRef = useRef<boolean | null>(null);
 
     const handleCloseVisualizer = () => {
-        setStore({ visualizerExpanded: false });
+        // While fullscreen, Escape is the browser's own "leave fullscreen" gesture.
+        // Let it drop back to the expanded-but-windowed visualizer instead of closing.
+        if (document.fullscreenElement) return;
+
+        setStore({
+            expanded: visualizerReturnToPlayer,
+            visualizerExpanded: false,
+            visualizerReturnToPlayer: false,
+        });
     };
 
     useHotkeys([['Escape', handleCloseVisualizer]]);
 
+    // Never leave the window stuck in fullscreen if the visualizer goes away while
+    // fullscreened (route change, close button, etc.).
+    useEffect(() => {
+        return () => {
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            }
+        };
+    }, []);
+
     useLayoutEffect(() => {
         if (isOpenedRef.current !== null) {
-            setStore({ visualizerExpanded: false });
+            setStore({ visualizerExpanded: false, visualizerReturnToPlayer: false });
         }
 
         isOpenedRef.current = true;
@@ -154,7 +125,7 @@ export const FullScreenVisualizer = () => {
 
     return (
         <VisualizerContainer isMobile={isMobile} windowBarStyle={windowBarStyle}>
-            <div className={styles.visualizerContainer}>
+            <div className={styles.visualizerContainer} id={VISUALIZER_FULLSCREEN_TARGET_ID}>
                 {webAudio ? (
                     <Suspense fallback={<></>}>
                         {visualizerType === 'butterchurn' ? (

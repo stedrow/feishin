@@ -1,6 +1,7 @@
 import type { PlayerFilter, SettingsState } from './settings.store';
 
 import { sanitizeCss } from '/@/renderer/utils/sanitize';
+import { IMAGE_PLACEHOLDER_PRIORITIES } from '/@/shared/utils/image-hash';
 
 const PLAYER_FILTER_FIELDS = new Set([
     'albumArtist',
@@ -198,6 +199,12 @@ const ENV_SETTING_SPECS: EnvSettingSpec[] = [
         type: 'enum',
     },
     {
+        enumSet: new Set(IMAGE_PLACEHOLDER_PRIORITIES),
+        key: 'FS_GENERAL_IMAGE_PLACEHOLDER_PRIORITY',
+        path: ['general', 'imagePlaceholderPriority'],
+        type: 'enum',
+    },
+    {
         key: 'FS_GENERAL_LANGUAGE',
         path: ['general', 'language'],
         skipIfEmpty: true,
@@ -243,10 +250,16 @@ const ENV_SETTING_SPECS: EnvSettingSpec[] = [
     },
     { key: 'FS_GENERAL_EXTERNAL_LINKS', path: ['general', 'externalLinks'], type: 'bool' },
     {
+        key: 'FS_GENERAL_FULLSCREEN_AUTO_OPEN_TIMEOUT',
+        path: ['general', 'fullscreenAutoOpenTimeout'],
+        type: 'num',
+    },
+    {
         key: 'FS_GENERAL_SHOW_LYRICS_IN_SIDEBAR',
         path: ['general', 'showLyricsInSidebar'],
         type: 'bool',
     },
+    { key: 'FS_GENERAL_SHOW_FAVORITES', path: ['general', 'showFavorites'], type: 'bool' },
     {
         key: 'FS_GENERAL_SHOW_QUEUE_IN_SIDEBAR',
         path: ['general', 'showQueueInSidebar'],
@@ -266,6 +279,11 @@ const ENV_SETTING_SPECS: EnvSettingSpec[] = [
     {
         key: 'FS_GENERAL_SIDEBAR_COLLAPSE_SHARED',
         path: ['general', 'sidebarCollapseShared'],
+        type: 'bool',
+    },
+    {
+        key: 'FS_GENERAL_SIDEBAR_IMAGE_EXPAND',
+        path: ['general', 'sidebarImageExpand'],
         type: 'bool',
     },
     {

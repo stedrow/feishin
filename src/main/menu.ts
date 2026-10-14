@@ -77,9 +77,11 @@ export default class MenuBuilder {
     applicationMenu: Menu | null = null;
     developmentEnvironmentSetup = false;
     mainWindow: BrowserWindow;
+    showMainWindow: () => void;
 
-    constructor(mainWindow: BrowserWindow) {
+    constructor(mainWindow: BrowserWindow, showMainWindow: () => void) {
         this.mainWindow = mainWindow;
+        this.showMainWindow = showMainWindow;
     }
 
     buildDarwinTemplate({
@@ -173,7 +175,15 @@ export default class MenuBuilder {
                 },
             ],
         };
-        const subMenuWindow: MenuItemConstructorOptions = { role: 'windowMenu' };
+        const subMenuWindow: MenuItemConstructorOptions = {
+            role: 'windowMenu',
+            submenu: [
+                {
+                    click: this.showMainWindow,
+                    label: 'Show Feishin',
+                },
+            ],
+        };
         const subMenuPlayback: MenuItemConstructorOptions = {
             label: 'Playback',
             submenu: [

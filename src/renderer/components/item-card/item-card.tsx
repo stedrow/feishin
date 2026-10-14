@@ -19,7 +19,7 @@ import { ItemControls } from '/@/renderer/components/item-list/types';
 import { JoinedArtists } from '/@/renderer/features/albums/components/joined-artists';
 import { useDragDrop } from '/@/renderer/hooks/use-drag-drop';
 import { AppRoute } from '/@/renderer/router/routes';
-import { useShowRatings } from '/@/renderer/store';
+import { useShowFavorites, useShowRatings } from '/@/renderer/store';
 import {
     formatDateAbsolute,
     formatDateRelative,
@@ -90,6 +90,7 @@ export const ItemCard = ({
     withControls,
 }: ItemCardProps) => {
     const showRatings = useShowRatings();
+    const showFavorites = useShowFavorites();
     const imageUrl = getImageUrl(data);
     const rows = providedRows || [];
 
@@ -110,6 +111,7 @@ export const ItemCard = ({
                     isRound={isRound}
                     itemType={itemType}
                     rows={rows}
+                    showFavorite={showFavorites}
                     showRating={showRatings}
                     withControls={withControls}
                 />
@@ -130,6 +132,7 @@ export const ItemCard = ({
                     isRound={isRound}
                     itemType={itemType}
                     rows={rows}
+                    showFavorite={showFavorites}
                     showRating={showRatings}
                     withControls={withControls}
                 />
@@ -150,6 +153,7 @@ export const ItemCard = ({
                     isRound={isRound}
                     itemType={itemType}
                     rows={rows}
+                    showFavorite={showFavorites}
                     showRating={showRatings}
                     withControls={withControls}
                 />
@@ -166,6 +170,7 @@ export interface ItemCardDerivativeProps extends Omit<ItemCardProps, 'type'> {
     imageUrl: string | undefined;
     internalState?: ItemListStateActions;
     rows: DataRow[];
+    showFavorite: boolean;
     showRating: boolean;
 }
 
@@ -186,6 +191,7 @@ const ItemCardStandardImageArea = memo(function ItemCardStandardImageArea({
     isRound,
     itemType,
     navigationPath,
+    showFavorite,
     showRating,
     variant,
     withControls,
@@ -204,6 +210,7 @@ const ItemCardStandardImageArea = memo(function ItemCardStandardImageArea({
     isRound?: boolean;
     itemType: LibraryItem;
     navigationPath: null | string;
+    showFavorite: boolean;
     showRating: boolean;
     variant: 'default' | 'poster';
     withControls?: boolean;
@@ -248,7 +255,9 @@ const ItemCardStandardImageArea = memo(function ItemCardStandardImageArea({
                 />
             ) : (
                 <ItemImage
+                    blurHash={(data as Album | AlbumArtist | Playlist | Song)?.blurHash}
                     className={clsx(styles.image, { [styles.isRound]: isRound })}
+                    dominantColor={(data as Album | AlbumArtist | Playlist)?.dominantColor}
                     enableDebounce={false}
                     {...(variant === 'poster' ? { enableViewport: enableImageViewport } : {})}
                     explicitStatus={'explicitStatus' in data && data ? data.explicitStatus : null}
@@ -256,10 +265,11 @@ const ItemCardStandardImageArea = memo(function ItemCardStandardImageArea({
                     id={(data as { imageId?: string })?.imageId}
                     itemType={itemType}
                     src={(data as { imageUrl?: string })?.imageUrl}
+                    thumbHash={(data as Album | AlbumArtist | Playlist | Song)?.thumbHash}
                     type="itemCard"
                 />
             )}
-            {isFavorite && <div className={styles.favoriteBadge} />}
+            {showFavorite && isFavorite && <div className={styles.favoriteBadge} />}
             {hasRating && <div className={styles.ratingBadge}>{userRating}</div>}
             <AnimatePresence>
                 {withControls && showControls && (
@@ -269,6 +279,7 @@ const ItemCardStandardImageArea = memo(function ItemCardStandardImageArea({
                         {...(variant === 'poster' ? { internalState } : {})}
                         item={data}
                         itemType={itemType}
+                        showFavorite={showFavorite}
                         showRating={showRating}
                         type={variant}
                     />
@@ -321,6 +332,7 @@ const CompactItemCardImageArea = memo(function CompactItemCardImageArea({
     itemType,
     navigationPath,
     rows,
+    showFavorite,
     showRating,
     withControls,
 }: {
@@ -338,6 +350,7 @@ const CompactItemCardImageArea = memo(function CompactItemCardImageArea({
     itemType: LibraryItem;
     navigationPath: null | string;
     rows: DataRow[];
+    showFavorite: boolean;
     showRating: boolean;
     withControls?: boolean;
 }) {
@@ -381,19 +394,22 @@ const CompactItemCardImageArea = memo(function CompactItemCardImageArea({
                 />
             ) : (
                 <ItemImage
+                    blurHash={(data as Album | AlbumArtist | Playlist | Song)?.blurHash}
                     className={clsx(styles.image, {
                         [styles.isRound]: isRound,
                     })}
+                    dominantColor={(data as Album | AlbumArtist | Playlist)?.dominantColor}
                     enableDebounce={false}
                     explicitStatus={'explicitStatus' in data && data ? data.explicitStatus : null}
                     fetchPriority={imageFetchPriority}
                     id={data?.imageId}
                     itemType={itemType}
                     src={(data as Album | AlbumArtist | Playlist | Song)?.imageUrl}
+                    thumbHash={(data as Album | AlbumArtist | Playlist | Song)?.thumbHash}
                     type="itemCard"
                 />
             )}
-            {isFavorite && <div className={styles.favoriteBadge} />}
+            {showFavorite && isFavorite && <div className={styles.favoriteBadge} />}
             {hasRating && <div className={styles.ratingBadge}>{userRating}</div>}
             <AnimatePresence>
                 {withControls && showControls && data && (
@@ -403,6 +419,7 @@ const CompactItemCardImageArea = memo(function CompactItemCardImageArea({
                         internalState={internalState}
                         item={data}
                         itemType={itemType}
+                        showFavorite={showFavorite}
                         showRating={showRating}
                         type="compact"
                     />
@@ -468,6 +485,7 @@ const CompactItemCard = ({
     isRound,
     itemType,
     rows,
+    showFavorite,
     showRating,
     withControls,
 }: ItemCardDerivativeProps) => {
@@ -634,6 +652,7 @@ const CompactItemCard = ({
                     itemType={itemType}
                     navigationPath={navigationPath}
                     rows={rows}
+                    showFavorite={showFavorite}
                     showRating={showRating}
                     withControls={withControls}
                 />
@@ -679,6 +698,7 @@ const DefaultItemCard = ({
     isRound,
     itemType,
     rows,
+    showFavorite,
     showRating,
     withControls,
 }: ItemCardDerivativeProps) => {
@@ -777,6 +797,7 @@ const DefaultItemCard = ({
                     isRound={isRound}
                     itemType={itemType}
                     navigationPath={navigationPath}
+                    showFavorite={showFavorite}
                     showRating={showRating}
                     variant="default"
                     withControls={withControls}
@@ -840,6 +861,7 @@ const PosterItemCard = ({
     isRound,
     itemType,
     rows,
+    showFavorite,
     showRating,
     withControls,
 }: ItemCardDerivativeProps) => {
@@ -1005,6 +1027,7 @@ const PosterItemCard = ({
                     isRound={isRound}
                     itemType={itemType}
                     navigationPath={navigationPath}
+                    showFavorite={showFavorite}
                     showRating={showRating}
                     variant="poster"
                     withControls={withControls}
@@ -1203,7 +1226,9 @@ export const getDataRows = (type?: 'compact' | 'default' | 'poster'): DataRow[] 
                 if ('releaseYear' in data && data.releaseYear != null) {
                     const releaseYear = data.releaseYear;
                     const originalYear =
-                        'originalYear' in data && data.originalYear > 0 ? data.originalYear : null;
+                        'originalYear' in data && data.originalYear != null && data.originalYear > 0
+                            ? data.originalYear
+                            : null;
 
                     if (originalYear !== null && originalYear !== releaseYear) {
                         return `${originalYear}${SEPARATOR_STRING}${releaseYear}`;
@@ -1231,6 +1256,24 @@ export const getDataRows = (type?: 'compact' | 'default' | 'poster'): DataRow[] 
                 return '';
             },
             id: 'releaseDate',
+        },
+        {
+            format: (data) => {
+                if ('year' in data && data.year) {
+                    return String(data.year);
+                }
+                return '';
+            },
+            id: 'year',
+        },
+        {
+            format: (data) => {
+                if ('date' in data && data.date) {
+                    return formatPartialIsoDateUTC(data.date);
+                }
+                return '';
+            },
+            id: 'date',
         },
         {
             format: (data) => {

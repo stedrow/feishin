@@ -1,14 +1,21 @@
 .container {
     position: absolute;
-    top: 0;
-    left: 0;
+    inset: 0;
     z-index: 200;
     display: flex;
     flex-direction: column;
-    width: 100%;
-    height: 100%;
     overflow: hidden;
     background: var(--theme-colors-background);
+}
+
+/* Mobile layout mounts the container in a full-viewport overlay, so pin it to the
+   main-content row (below the window bar, above the playerbar) instead. */
+.mobile-container {
+    bottom: 90px;
+}
+
+.mobile-container-with-window-bar {
+    top: 30px;
 }
 
 .controls-container {
@@ -63,4 +70,10 @@
     font-size: clamp(1.25rem, 5vw, 3.5rem);
     line-height: 1.3;
     color: #ddd;
+}
+
+.visualizer-container:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    background: var(--theme-colors-background);
 }

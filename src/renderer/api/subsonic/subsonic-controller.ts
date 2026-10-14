@@ -314,6 +314,14 @@ export const SubsonicController: InternalControllerEndpoint = {
         return null;
     },
     authenticate: async (url, body) => {
+        if (body.action && body.action !== 'password') {
+            throw new Error('Subsonic does not support this authentication method');
+        }
+
+        if (typeof body.password !== 'string' || typeof body.username !== 'string') {
+            throw new Error('Subsonic authentication requires a username and password');
+        }
+
         let credential: string;
         let credentialParams: {
             p?: string;
@@ -496,7 +504,7 @@ export const SubsonicController: InternalControllerEndpoint = {
     getAlbumArtistInfo: async (args) => {
         const { apiClientProps, query } = args;
 
-        const artistInfoRes = await ssApiClient(apiClientProps).getArtistInfo({
+        const artistInfoRes = await ssApiClient(apiClientProps).getArtistInfo2({
             query: {
                 id: query.id,
                 ...(query.limit != null && { count: query.limit }),
@@ -507,14 +515,14 @@ export const SubsonicController: InternalControllerEndpoint = {
             return null;
         }
 
-        const artistInfo = artistInfoRes.body.artistInfo;
+        const artistInfo = artistInfoRes.body.artistInfo2;
 
         return {
             biography: artistInfo?.biography || null,
             similarArtists:
                 artistInfo?.similarArtist?.map((artist) => ({
-                    id: artist.id,
-                    imageId: artist.coverArt ?? artist.id,
+                    id: String(artist.id),
+                    imageId: artist.coverArt ?? String(artist.id),
                     imageUrl: null,
                     name: artist.name,
                     userFavorite: Boolean(artist.starred) || false,
@@ -976,6 +984,56 @@ export const SubsonicController: InternalControllerEndpoint = {
             '&c=Feishin'
         );
     },
+    getFavoriteSongs: async (args) => {
+        const { apiClientProps, query } = args;
+
+        // if user selects 'rating'
+        if (query.type === 'rating') {
+            const res = await SubsonicController.getSongList({
+                apiClientProps,
+                query: {
+                    artistIds: [query.artistId],
+                    sortBy: SongListSort.RATING,
+                    sortOrder: SortOrder.DESC,
+                    startIndex: 0,
+                },
+            });
+
+            const songsWithHighRating = orderBy(
+                res.items.filter((song) => song.userRating !== null && song.userRating > 2),
+                ['userRating', 'userFavorite', 'playCount', 'albumId', 'trackNumber'],
+                ['desc', 'desc', 'desc', 'asc', 'asc'],
+            );
+
+            return {
+                items: songsWithHighRating,
+                startIndex: 0,
+                totalRecordCount: res.totalRecordCount,
+            };
+        }
+
+        // else if user selects 'favorites'
+        const res = await SubsonicController.getSongList({
+            apiClientProps,
+            query: {
+                artistIds: [query.artistId],
+                sortBy: SongListSort.FAVORITED,
+                sortOrder: SortOrder.DESC,
+                startIndex: 0,
+            },
+        });
+        const songsWithFavorite = orderBy(
+            res.items.filter((song) => song.userFavorite),
+            ['userFavorite', 'userRating', 'playCount', 'albumId', 'trackNumber'],
+            ['desc', 'desc', 'desc', 'asc', 'asc'],
+        );
+
+        return {
+            items: songsWithFavorite,
+            startIndex: 0,
+            totalRecordCount: res.totalRecordCount,
+        };
+    },
     getFolder: async ({ apiClientProps, query }) => {
         const sortOrder = (query.sortOrder?.toLowerCase() ?? 'asc') as 'asc' | 'desc';
 
@@ -1417,6 +1475,10 @@ export const SubsonicController: InternalControllerEndpoint = {
 
         if (subsonicFeatures[SubsonicExtensions.PLAYBACK_REPORT]) {
             features.reportPlayback = [1];
+        }
+
+        if (subsonicFeatures[SubsonicExtensions.TOP_SONGS_BY_ARTIST_ID]) {
+            features.topSongsByArtistId = [1];
         }
         try {
             const jukeboxStatus = await ssApiClient(apiClientProps).jukeboxControl({
@@ -1931,21 +1993,33 @@ export const SubsonicController: InternalControllerEndpoint = {
             const directPlayProfiles = getDirectPlayProfiles();
             const transcodingProfiles = getDefaultTranscodingProfiles();
 
-            const transcodeDecision = await ssApiClient(apiClientProps).getTranscodeDecision({
-                body: {
-                    codecProfiles: [],
-                    directPlayProfiles,
-                    maxAudioBitrate: 0,
-                    maxTranscodingAudioBitrate,
-                    name: 'Feishin',
-                    platform: navigator.userAgent,
-                    transcodingProfiles,
-                },
-                query: {
-                    mediaId: id,
-                    mediaType,
-                },
-            });
+            const transcodeDecision = await ssApiClient(apiClientProps)
+                .getTranscodeDecision({
+                    body: {
+                        codecProfiles: [],
+                        directPlayProfiles,
+                        maxAudioBitrate: 0,
+                        maxTranscodingAudioBitrate,
+                        name: 'Feishin',
+                        platform: navigator.userAgent,
+                        transcodingProfiles,
+                    },
+                    query: {
+                        mediaId: id,
+                        mediaType,
+                    },
+                })
+                .catch((error: unknown) => {
+                    logger.warn(
+                        `Failed to request a transcode decision for song ${id}, falling back to direct stream`,
+                        { error },
+                    );
+                    return null;
+                });
+
+            if (!transcodeDecision) {
+                return streamUrl;
+            }
 
             // If the server returns an error for transcodeDecision, fall back to direct stream so that we don't break the player
             if (transcodeDecision.status !== 200) {
@@ -1985,11 +2059,21 @@ export const SubsonicController: InternalControllerEndpoint = {
     getStructuredLyrics: async (args) => {
         const { apiClientProps, query } = args;
         const server = apiClientProps.server;
+        const supportsStructuredLyrics = hasFeatureWithVersion(
+            server,
+            ServerFeature.LYRICS_MULTIPLE_STRUCTURED,
+            1,
+        );
+
         const supportsEnhancedLyrics = hasFeatureWithVersion(
             server,
             ServerFeature.LYRICS_MULTIPLE_STRUCTURED,
             2,
         );
+
+        if (!supportsStructuredLyrics && !supportsEnhancedLyrics) {
+            return [];
+        }
 
         const res = await ssApiClient(apiClientProps).getStructuredLyrics({
             query: {
@@ -2020,7 +2104,9 @@ export const SubsonicController: InternalControllerEndpoint = {
         if (type === 'community') {
             const res = await ssApiClient(apiClientProps).getTopSongsList({
                 query: {
-                    artist: query.artist,
+                    ...(hasFeature(apiClientProps.server, ServerFeature.TOP_SONGS_BY_ARTIST_ID)
+                        ? { id: query.artistId }
+                        : { artist: query.artist }),
                     count: query.limit,
                 },
             });
@@ -2362,6 +2448,17 @@ export const SubsonicController: InternalControllerEndpoint = {
                     rating: query.rating,
                 },
             });
+        }
+
+        return null;
+    },
+    startLibraryScan: async (args) => {
+        const { apiClientProps } = args;
+
+        const res = await ssApiClient(apiClientProps).startScan({ query: {} });
+
+        if (res.status !== 200) {
+            throw new Error('Failed to start library scan');
         }
 
         return null;
